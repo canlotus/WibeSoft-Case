@@ -1,0 +1,23 @@
+﻿<Properties StartupConfiguration="{A6BF86D2-9E3A-692F-123A-A4BA456DE8D6}|">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Script/TileConversionManager.cs">
+    <Files>
+      <File FileName="Assets/Script/TilemapClickHandler.cs" Line="28" Column="2" />
+      <File FileName="Assets/Script/EkinSecimManager.cs" Line="28" Column="71" />
+      <File FileName="Assets/Script/TileConversionManager.cs" Line="98" Column="2" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="WibeSoft Case" expanded="True" selected="True" />
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="ae441d45-174e-4f6a-b2ab-d10fc25d3ffd" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>
