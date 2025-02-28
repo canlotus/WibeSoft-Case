@@ -6,27 +6,26 @@ using System.Text;
 public class TileConversionManager : MonoBehaviour
 {
     [Header("Tilemap & Tile Settings")]
-    public Tilemap tilemap;              // The tilemap
-    public TileBase farmlandTile;        // The farmland (crop) tile asset (for conversion)
-    public TileBase roadTile;            // The road tile asset (not eligible for conversion)
+    public Tilemap tilemap;             
+    public TileBase farmlandTile;       
+    public TileBase roadTile;          
 
     [Header("Conversion Settings")]
-    public int conversionCostPerTile = 50;   // Cost per tile conversion
-    public int currentGold = 1000;           // Starting gold amount
-    public TextMeshProUGUI goldDisplay;      // Gold display (TMP)
+    public int conversionCostPerTile = 50;   
+    public int currentGold = 1000;          
+    public TextMeshProUGUI goldDisplay;     
 
     [Header("UI Panel")]
-    public GameObject conversionPanel;       // Conversion panel UI
+    public GameObject conversionPanel;      
 
     [Header("Highlight Settings")]
-    public Color highlightColor = new Color(1f, 1f, 0f, 0.5f); // Semi-transparent yellow
+    public Color highlightColor = new Color(1f, 1f, 0f, 0.5f); 
     private Vector3Int lastHoveredCell;
     private bool isHovering = false;
 
     [Header("Conversion Mode")]
-    public bool conversionModeActive = false; // When active, conversion processing is enabled
+    public bool conversionModeActive = false; 
 
-    // Keys for PlayerPrefs
     private const string GoldKey = "Gold";
     private const string TilemapStateKey = "TilemapState";
 
@@ -35,7 +34,7 @@ public class TileConversionManager : MonoBehaviour
         tilemap.CompressBounds();
         LoadGold();
         UpdateGoldDisplay();
-        LoadTilemapState(); // Apply saved conversion state when scene loads
+        LoadTilemapState(); 
         if (conversionPanel != null)
             conversionPanel.SetActive(false);
     }
@@ -69,7 +68,6 @@ public class TileConversionManager : MonoBehaviour
             if (tilemap.HasTile(hoveredCell))
             {
                 TileBase currentTile = tilemap.GetTile(hoveredCell);
-                // Highlight only if the tile is eligible (not road and not already farmland)
                 if (currentTile != null && currentTile != roadTile && currentTile != farmlandTile)
                 {
                     tilemap.SetTileFlags(hoveredCell, TileFlags.None);
@@ -107,7 +105,7 @@ public class TileConversionManager : MonoBehaviour
                         tilemap.SetTile(hoveredCell, farmlandTile);
                         tilemap.SetColor(hoveredCell, Color.white);
                         Debug.Log("Tile converted at " + hoveredCell);
-                        conversionModeActive = false; // Close conversion mode after one conversion
+                        conversionModeActive = false; 
                         SaveGold();
                         SaveTilemapState();
                     }

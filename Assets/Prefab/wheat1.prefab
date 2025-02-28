@@ -98,15 +98,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb50cb97c6c1047aa8e859b7e574319e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cropType: 
-  totalGrowthTime: 0
-  stage1Duration: 0
-  stage1Sprite: {fileID: 0}
-  stage2Sprite: {fileID: 0}
-  stage3Sprite: {fileID: 0}
+  cropType: Wheat
+  totalGrowthTime: 20
+  stage1Duration: 10
+  stage1Sprite: {fileID: 21300000, guid: 2f170a57f1d214c5db26de6187ff13dd, type: 3}
+  stage2Sprite: {fileID: 21300000, guid: 4640bb778e2da4e47afc05a23cb98dc4, type: 3}
+  stage3Sprite: {fileID: 21300000, guid: aa9ba0fecc9d44c118ad2ea217efbd97, type: 3}
+  harvestPrefab: {fileID: 8799419150641090786, guid: 6bf7933b27c8948ac86c71e6b31ee191, type: 3}
   growthUIPanel: {fileID: 0}
   growthSlider: {fileID: 0}
   timeRemainingText: {fileID: 0}
+  closeButton: {fileID: 0}
 --- !u!70 &3935793040224454790
 CapsuleCollider2D:
   m_ObjectHideFlags: 0

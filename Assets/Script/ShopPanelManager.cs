@@ -91,9 +91,8 @@ public class ShopPanelManager : MonoBehaviour
         if (cornSeedText != null)
             cornSeedText.text = "Price: " + cornSeedPrice;
 
-        // Optionally disable purchase buttons if not enough gold
         if (currentGold < wheatSeedPrice && wheatSeedText != null) { }
-        // (You can add additional logic here if you have button references)
+
     }
 
     void SaveShopData()
@@ -114,7 +113,6 @@ public class ShopPanelManager : MonoBehaviour
             cornSeedCount = PlayerPrefs.GetInt(CornSeedKey);
     }
 
-    // Public getters and decrement methods for use in the crop selection panel
     public int GetWheatSeedCount() { return wheatSeedCount; }
     public int GetCornSeedCount() { return cornSeedCount; }
     public void DecreaseWheatSeedCount(int amount)

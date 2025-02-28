@@ -6,94 +6,270 @@ using System;
 public class CropGrowth : MonoBehaviour
 {
     [Header("Crop Settings")]
-    public string cropType;           // "Wheat" veya "Corn"
-    public float totalGrowthTime;     // Toplam büyüme süresi (saniye cinsinden)
-    public float stage1Duration;      // Stage 1 süresi (saniye cinsinden)
-    // Stage2, stage1Duration'dan totalGrowthTime'a kadar; stage3, totalGrowthTime tamamlandığında
+    public string cropType;
+    public float totalGrowthTime;
+    public float stage1Duration;
 
     [Header("Growth Sprites")]
-    public Sprite stage1Sprite;       // Stage 1 sprite'ı (ilk görüntü)
-    public Sprite stage2Sprite;       // Stage 2 sprite'ı (orta aşama)
-    public Sprite stage3Sprite;       // Stage 3 sprite'ı (tam olgunluk)
+    public Sprite stage1Sprite;
+    public Sprite stage2Sprite;
+    public Sprite stage3Sprite;
 
-    [Header("Growth UI")]
-    public GameObject growthUIPanel;  // Büyüme UI paneli (slider ve kalan süre TMP'si)
-    public Slider growthSlider;       // Büyüme ilerleme slider'ı (0-1 arası)
-    public TextMeshProUGUI timeRemainingText; // Kalan süreyi gösteren TMP text
+    [Header("Harvest Settings")]
+    public GameObject harvestPrefab;
+    private GameObject harvestIndicator;
+
+    [Header("Growth UI (Global)")]
+    public GameObject growthUIPanel;
+    public Slider growthSlider;
+    public TextMeshProUGUI timeRemainingText;
+    public Button closeButton;
 
     private SpriteRenderer sr;
-    private long plantingTicks;       // Ekim zamanı (UTC ticks)
+    private long plantingTicks;
     private bool planted = false;
+    private bool isFullyGrown = false;
+    private bool isHarvested = false;
+    private string cropID;
+    private Vector3Int tilePos;
+
+    public static CropGrowth activeGrowthInstance;
 
     void Awake()
     {
         sr = GetComponent<SpriteRenderer>();
-        if (growthUIPanel != null)
-            growthUIPanel.SetActive(false);
+        tilePos = new Vector3Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y), 0);
+
+        if (UIManager.Instance != null)
+        {
+            growthUIPanel = UIManager.Instance.globalGrowthUIPanel;
+
+            if (growthUIPanel != null)
+            {
+                growthSlider = growthUIPanel.transform.Find("Slider")?.GetComponent<Slider>();
+                timeRemainingText = growthUIPanel.transform.Find("TimeRemainingText")?.GetComponent<TextMeshProUGUI>();
+                closeButton = growthUIPanel.transform.Find("CloseButton")?.GetComponent<Button>();
+
+                if (closeButton != null)
+                {
+                    closeButton.onClick.RemoveAllListeners();
+                    closeButton.onClick.AddListener(HideGrowthUI);
+                }
+            }
+        }
     }
 
     void Start()
     {
-        // Crop eklendiğinde ekim zamanını kaydet (her crop prefab'ı kendine özgü bir ID ile kaydedilebilir)
-        string key = gameObject.name + "_PlantTime";
-        if (PlayerPrefs.HasKey(key))
+        cropID = GenerateCropID();
+        LoadCropData();
+
+        if (isHarvested)
         {
-            plantingTicks = long.Parse(PlayerPrefs.GetString(key));
+            Destroy(gameObject);
+            return;
         }
-        else
-        {
-            plantingTicks = DateTime.UtcNow.Ticks;
-            PlayerPrefs.SetString(key, plantingTicks.ToString());
-            PlayerPrefs.Save();
-        }
+
         planted = true;
+        UpdateCropVisual();
+
+        PlayerPrefs.SetInt($"{tilePos.x}_{tilePos.y}_IsEmpty", 0);
+        PlayerPrefs.Save();
     }
 
     void Update()
     {
-        if (!planted)
-            return;
+        if (!planted || isFullyGrown || isHarvested) return;
 
-        // Geçen süreyi hesapla (saniye cinsinden)
         long currentTicks = DateTime.UtcNow.Ticks;
-        float elapsed = (currentTicks - plantingTicks) / 10000000f; // 1 saniye = 10 milyon tick
+        float elapsed = (currentTicks - plantingTicks) / 10000000f;
 
-        // Büyüme aşamasına göre sprite'ı ayarla
-        if (elapsed < stage1Duration)
+        if (elapsed >= totalGrowthTime)
         {
-            sr.sprite = stage1Sprite;
+            sr.sprite = stage3Sprite;
+            isFullyGrown = true;
+            ShowHarvestIndicator();
+            SaveCropData();
         }
-        else if (elapsed < totalGrowthTime)
+        else if (elapsed >= stage1Duration)
         {
             sr.sprite = stage2Sprite;
         }
         else
         {
-            sr.sprite = stage3Sprite;
+            sr.sprite = stage1Sprite;
         }
 
-        // Eğer büyüme UI paneli açıksa slider ve kalan süreyi güncelle
-        if (growthUIPanel != null && growthUIPanel.activeSelf)
+        if (growthUIPanel.activeSelf && activeGrowthInstance == this)
+        {
+            UpdateUI();
+        }
+    }
+
+    void OnMouseDown()
+    {
+        if (isFullyGrown)
+        {
+            HarvestCrop();
+            return;
+        }
+
+        if (growthUIPanel == null)
+        {
+            return;
+        }
+
+        if (activeGrowthInstance != null && activeGrowthInstance != this)
+        {
+            activeGrowthInstance.HideGrowthUI();
+        }
+
+        activeGrowthInstance = this;
+        growthUIPanel.SetActive(true);
+        UpdateUI();
+    }
+
+    void UpdateUI()
+    {
+        if (!planted) return;
+
+        long currentTicks = DateTime.UtcNow.Ticks;
+        float elapsed = (currentTicks - plantingTicks) / 10000000f;
+        float remaining = Mathf.Max(0, totalGrowthTime - elapsed);
+
+        if (isFullyGrown)
+        {
+            timeRemainingText.text = "Ready";
+            growthSlider.value = 1f;
+        }
+        else
         {
             float progress = Mathf.Clamp01(elapsed / totalGrowthTime);
             growthSlider.value = progress;
-            float remaining = Mathf.Max(0, totalGrowthTime - elapsed);
             TimeSpan ts = TimeSpan.FromSeconds(remaining);
-            timeRemainingText.text = string.Format("{0:D2}:{1:D2}", ts.Minutes, ts.Seconds);
+            timeRemainingText.text = $"{ts.Minutes:D2}:{ts.Seconds:D2}";
         }
     }
 
-    // Crop üzerine tıklandığında büyüme UI panelini aç
-    void OnMouseDown()
+    void UpdateCropVisual()
     {
-        if (growthUIPanel != null)
-            growthUIPanel.SetActive(true);
+        long currentTicks = DateTime.UtcNow.Ticks;
+        float elapsed = (currentTicks - plantingTicks) / 10000000f;
+
+        if (elapsed >= totalGrowthTime)
+        {
+            sr.sprite = stage3Sprite;
+            isFullyGrown = true;
+            ShowHarvestIndicator();
+        }
+        else if (elapsed >= stage1Duration)
+        {
+            sr.sprite = stage2Sprite;
+        }
+        else
+        {
+            sr.sprite = stage1Sprite;
+        }
     }
 
-    // UI'yi kapatmak için dışarıdan çağrılabilir
+    void HarvestCrop()
+    {
+        Debug.Log("🌾 Crop hasat edildi: " + cropType);
+        isHarvested = true;
+
+        RemoveCropData();
+
+        InventoryManager.Instance.AddItem(cropType, 1);
+
+
+        string tileKey = $"{tilePos.x}_{tilePos.y}_IsEmpty";
+        PlayerPrefs.SetInt(tileKey, 1);
+        PlayerPrefs.Save();
+        Debug.Log($"🗑️ Hasat tamamlandı, alan boş olarak işaretlendi: {tileKey} (Value: {PlayerPrefs.GetInt(tileKey)})");
+
+
+        Collider2D cropCollider = GetComponent<Collider2D>();
+        if (cropCollider != null)
+        {
+            Destroy(cropCollider);
+        }
+
+        if (harvestIndicator != null)
+            Destroy(harvestIndicator);
+
+        Destroy(gameObject);
+    }
+    void ShowHarvestIndicator()
+    {
+        if (harvestPrefab != null && harvestIndicator == null)
+        {
+            Vector3 indicatorPos = transform.position + new Vector3(0, 0.5f, 0);
+            harvestIndicator = Instantiate(harvestPrefab, indicatorPos, Quaternion.identity);
+        }
+    }
+
     public void HideGrowthUI()
     {
         if (growthUIPanel != null)
+        {
             growthUIPanel.SetActive(false);
+        }
+    }
+
+    private string GenerateCropID()
+    {
+        return $"{cropType}_{tilePos.x}_{tilePos.y}";
+    }
+
+    void SaveCropData()
+    {
+        PlayerPrefs.SetString(cropID + "_PlantTime", plantingTicks.ToString());
+        PlayerPrefs.SetInt(cropID + "_GrowthStatus", isFullyGrown ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
+    void LoadCropData()
+    {
+        // Artık tile boş kontrolünü kaldırıyoruz.
+        if (PlayerPrefs.HasKey(cropID + "_PlantTime"))
+        {
+            plantingTicks = long.Parse(PlayerPrefs.GetString(cropID + "_PlantTime"));
+            isFullyGrown = PlayerPrefs.GetInt(cropID + "_GrowthStatus", 0) == 1;
+        }
+        else
+        {
+            // Yeni ekin ekleniyorsa, başlangıç verilerini oluştur.
+            plantingTicks = DateTime.UtcNow.Ticks;
+            isFullyGrown = false;
+            PlayerPrefs.SetString(cropID + "_PlantTime", plantingTicks.ToString());
+            PlayerPrefs.SetInt(cropID + "_GrowthStatus", 0);
+            PlayerPrefs.Save();
+        }
+    }
+
+    void RemoveCropData()
+    {
+        string tileKey = $"{tilePos.x}_{tilePos.y}_IsEmpty";
+
+        // Mevcut crop verilerini siliyoruz.
+        PlayerPrefs.DeleteKey(cropID + "_PlantTime");
+        PlayerPrefs.DeleteKey(cropID + "_GrowthStatus");
+
+        // CropStateKey içerisindeki ilgili kaydı kaldırıyoruz.
+        const string CropStateKey = "CropState";
+        string existing = PlayerPrefs.GetString(CropStateKey, "");
+        // Kaldırmak istediğimiz kaydın formatı: "x,y,cropType;"
+        string entryToRemove = $"{tilePos.x},{tilePos.y},{cropType};";
+        if (existing.Contains(entryToRemove))
+        {
+            existing = existing.Replace(entryToRemove, "");
+            PlayerPrefs.SetString(CropStateKey, existing);
+        }
+
+        // Tarla boş olarak işaretleniyor.
+        PlayerPrefs.SetInt(tileKey, 1);
+        PlayerPrefs.Save();
+
+        Debug.Log($"🗑️ {cropID} kayıtlardan silindi ve tarla boş olarak işaretlendi!");
     }
 }

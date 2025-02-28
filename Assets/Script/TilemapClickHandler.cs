@@ -3,10 +3,10 @@ using UnityEngine.Tilemaps;
 
 public class TilemapClickHandler : MonoBehaviour
 {
-    public Tilemap tilemap;                   // Tilemap referansı
-    public TileBase farmlandTile;               // Farmland (tarla) tile asset'i
-    public CropSelectionManager ekinSecimManager;   // Ekim panelini yöneten manager
-    public TileConversionManager tileConversionManager; // Conversion modunu yöneten manager
+    public Tilemap tilemap;
+    public TileBase farmlandTile;
+    public CropSelectionManager ekinSecimManager;
+    public TileConversionManager tileConversionManager;
 
     void Update()
     {
@@ -18,19 +18,20 @@ public class TilemapClickHandler : MonoBehaviour
             TileBase clickedTile = tilemap.GetTile(tilePos);
             if (clickedTile == null) return;
 
-            // Conversion modu aktifse, conversion işlemleri geçerli; aksi halde normal mod
-            if (tileConversionManager != null && tileConversionManager.conversionModeActive)
+            string tileKey = $"{tilePos.x}_{tilePos.y}_IsEmpty";
+
+            //  **Eğer tarla boş olarak işaretlenmişse, ekim yapılabilir.**
+            if (PlayerPrefs.HasKey(tileKey) && PlayerPrefs.GetInt(tileKey) == 1)
             {
-                // Eğer tıklanan tile farmland tile olarak belirlenmişse (isimleri karşılaştırıyoruz)
-                if (clickedTile.name == farmlandTile.name)
-                {
-                    ekinSecimManager.OpenCropSelectionPanel(tilePos);
-                }
+                Debug.Log($" Bu tarla boş, ekime uygun! (Key: {tileKey}, Value: {PlayerPrefs.GetInt(tileKey)})");
+                ekinSecimManager.OpenCropSelectionPanel(tilePos);
                 return;
             }
-            // Normal modda, farmland tile ise ekim panelini aç
+
+            //  **Farmland kontrolü, tarlaya ekim için uygunsa paneli aç.**
             if (clickedTile.name == farmlandTile.name)
             {
+                Debug.Log(" Farmland bulundu, ekim paneli açılıyor.");
                 ekinSecimManager.OpenCropSelectionPanel(tilePos);
             }
         }
