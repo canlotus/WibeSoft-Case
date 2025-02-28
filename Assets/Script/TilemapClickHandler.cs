@@ -5,7 +5,7 @@ public class TilemapClickHandler : MonoBehaviour
 {
     public Tilemap tilemap;                   // Tilemap referansı
     public TileBase farmlandTile;               // Farmland (tarla) tile asset'i
-    public EkinSecimManager ekinSecimManager;   // Ekim panelini yöneten manager
+    public CropSelectionManager ekinSecimManager;   // Ekim panelini yöneten manager
     public TileConversionManager tileConversionManager; // Conversion modunu yöneten manager
 
     void Update()
@@ -24,14 +24,14 @@ public class TilemapClickHandler : MonoBehaviour
                 // Eğer tıklanan tile farmland tile olarak belirlenmişse (isimleri karşılaştırıyoruz)
                 if (clickedTile.name == farmlandTile.name)
                 {
-                    ekinSecimManager.EkinSecimiAc(tilePos);
+                    ekinSecimManager.OpenCropSelectionPanel(tilePos);
                 }
                 return;
             }
             // Normal modda, farmland tile ise ekim panelini aç
             if (clickedTile.name == farmlandTile.name)
             {
-                ekinSecimManager.EkinSecimiAc(tilePos);
+                ekinSecimManager.OpenCropSelectionPanel(tilePos);
             }
         }
     }
