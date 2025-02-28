@@ -1,0 +1,19 @@
+# Unity tarafından oluşturulan klasörler
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+
+# Visual Studio / MonoDevelop / Rider dosyaları
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+
+# İşletim sistemi dosyaları
+.DS_Store
+Thumbs.db
