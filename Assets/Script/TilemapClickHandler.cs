@@ -7,6 +7,11 @@ public class TilemapClickHandler : MonoBehaviour
     public TileBase farmlandTile;
     public CropSelectionManager ekinSecimManager;
     public TileConversionManager tileConversionManager;
+    public bool buildingModeActive = false;
+
+    void Start()
+    {
+    }
 
     void Update()
     {
@@ -16,22 +21,37 @@ public class TilemapClickHandler : MonoBehaviour
             mouseWorldPos.z = 0;
             Vector3Int tilePos = tilemap.WorldToCell(mouseWorldPos);
             TileBase clickedTile = tilemap.GetTile(tilePos);
-            if (clickedTile == null) return;
-
+            if (clickedTile == null)
+            {
+                return;
+            }
             string tileKey = $"{tilePos.x}_{tilePos.y}_IsEmpty";
-
-            //  **Eğer tarla boş olarak işaretlenmişse, ekim yapılabilir.**
+            if (buildingModeActive)
+            {
+                if (clickedTile.name == tileConversionManager.houseTile.name ||
+                    clickedTile.name == tileConversionManager.factoryTile.name)
+                {
+                    tileConversionManager.PrepareBuildingMove(tilePos, clickedTile);
+                }
+                else
+                {
+                    if (PlayerPrefs.HasKey(tileKey) && PlayerPrefs.GetInt(tileKey) == 1)
+                    {
+                        tileConversionManager.ActivateConversionMode();
+                    }
+                    else
+                    {
+                    }
+                }
+                return;
+            }
             if (PlayerPrefs.HasKey(tileKey) && PlayerPrefs.GetInt(tileKey) == 1)
             {
-                Debug.Log($" Bu tarla boş, ekime uygun! (Key: {tileKey}, Value: {PlayerPrefs.GetInt(tileKey)})");
                 ekinSecimManager.OpenCropSelectionPanel(tilePos);
                 return;
             }
-
-            //  **Farmland kontrolü, tarlaya ekim için uygunsa paneli aç.**
-            if (clickedTile.name == farmlandTile.name)
+            if (clickedTile == farmlandTile)
             {
-                Debug.Log(" Farmland bulundu, ekim paneli açılıyor.");
                 ekinSecimManager.OpenCropSelectionPanel(tilePos);
             }
         }

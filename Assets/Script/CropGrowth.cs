@@ -1,25 +1,22 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 using TMPro;
 using System;
 
 public class CropGrowth : MonoBehaviour
 {
-    [Header("Crop Settings")]
     public string cropType;
     public float totalGrowthTime;
     public float stage1Duration;
 
-    [Header("Growth Sprites")]
     public Sprite stage1Sprite;
     public Sprite stage2Sprite;
     public Sprite stage3Sprite;
 
-    [Header("Harvest Settings")]
     public GameObject harvestPrefab;
     private GameObject harvestIndicator;
 
-    [Header("Growth UI (Global)")]
     public GameObject growthUIPanel;
     public Slider growthSlider;
     public TextMeshProUGUI timeRemainingText;
@@ -43,13 +40,11 @@ public class CropGrowth : MonoBehaviour
         if (UIManager.Instance != null)
         {
             growthUIPanel = UIManager.Instance.globalGrowthUIPanel;
-
             if (growthUIPanel != null)
             {
                 growthSlider = growthUIPanel.transform.Find("Slider")?.GetComponent<Slider>();
                 timeRemainingText = growthUIPanel.transform.Find("TimeRemainingText")?.GetComponent<TextMeshProUGUI>();
                 closeButton = growthUIPanel.transform.Find("CloseButton")?.GetComponent<Button>();
-
                 if (closeButton != null)
                 {
                     closeButton.onClick.RemoveAllListeners();
@@ -63,16 +58,13 @@ public class CropGrowth : MonoBehaviour
     {
         cropID = GenerateCropID();
         LoadCropData();
-
         if (isHarvested)
         {
             Destroy(gameObject);
             return;
         }
-
         planted = true;
         UpdateCropVisual();
-
         PlayerPrefs.SetInt($"{tilePos.x}_{tilePos.y}_IsEmpty", 0);
         PlayerPrefs.Save();
     }
@@ -113,17 +105,11 @@ public class CropGrowth : MonoBehaviour
             HarvestCrop();
             return;
         }
-
-        if (growthUIPanel == null)
-        {
-            return;
-        }
-
+        if (growthUIPanel == null) return;
         if (activeGrowthInstance != null && activeGrowthInstance != this)
         {
             activeGrowthInstance.HideGrowthUI();
         }
-
         activeGrowthInstance = this;
         growthUIPanel.SetActive(true);
         UpdateUI();
@@ -132,11 +118,9 @@ public class CropGrowth : MonoBehaviour
     void UpdateUI()
     {
         if (!planted) return;
-
         long currentTicks = DateTime.UtcNow.Ticks;
         float elapsed = (currentTicks - plantingTicks) / 10000000f;
         float remaining = Mathf.Max(0, totalGrowthTime - elapsed);
-
         if (isFullyGrown)
         {
             timeRemainingText.text = "Ready";
@@ -155,7 +139,6 @@ public class CropGrowth : MonoBehaviour
     {
         long currentTicks = DateTime.UtcNow.Ticks;
         float elapsed = (currentTicks - plantingTicks) / 10000000f;
-
         if (elapsed >= totalGrowthTime)
         {
             sr.sprite = stage3Sprite;
@@ -174,31 +157,20 @@ public class CropGrowth : MonoBehaviour
 
     void HarvestCrop()
     {
-        Debug.Log("🌾 Crop hasat edildi: " + cropType);
         isHarvested = true;
-
         RemoveCropData();
-
         InventoryManager.Instance.AddItem(cropType, 1);
-
-
         string tileKey = $"{tilePos.x}_{tilePos.y}_IsEmpty";
         PlayerPrefs.SetInt(tileKey, 1);
         PlayerPrefs.Save();
-        Debug.Log($"🗑️ Hasat tamamlandı, alan boş olarak işaretlendi: {tileKey} (Value: {PlayerPrefs.GetInt(tileKey)})");
-
-
         Collider2D cropCollider = GetComponent<Collider2D>();
         if (cropCollider != null)
-        {
             Destroy(cropCollider);
-        }
-
         if (harvestIndicator != null)
             Destroy(harvestIndicator);
-
         Destroy(gameObject);
     }
+
     void ShowHarvestIndicator()
     {
         if (harvestPrefab != null && harvestIndicator == null)
@@ -211,9 +183,7 @@ public class CropGrowth : MonoBehaviour
     public void HideGrowthUI()
     {
         if (growthUIPanel != null)
-        {
             growthUIPanel.SetActive(false);
-        }
     }
 
     private string GenerateCropID()
@@ -230,7 +200,6 @@ public class CropGrowth : MonoBehaviour
 
     void LoadCropData()
     {
-        // Artık tile boş kontrolünü kaldırıyoruz.
         if (PlayerPrefs.HasKey(cropID + "_PlantTime"))
         {
             plantingTicks = long.Parse(PlayerPrefs.GetString(cropID + "_PlantTime"));
@@ -238,7 +207,6 @@ public class CropGrowth : MonoBehaviour
         }
         else
         {
-            // Yeni ekin ekleniyorsa, başlangıç verilerini oluştur.
             plantingTicks = DateTime.UtcNow.Ticks;
             isFullyGrown = false;
             PlayerPrefs.SetString(cropID + "_PlantTime", plantingTicks.ToString());
@@ -250,26 +218,17 @@ public class CropGrowth : MonoBehaviour
     void RemoveCropData()
     {
         string tileKey = $"{tilePos.x}_{tilePos.y}_IsEmpty";
-
-        // Mevcut crop verilerini siliyoruz.
         PlayerPrefs.DeleteKey(cropID + "_PlantTime");
         PlayerPrefs.DeleteKey(cropID + "_GrowthStatus");
-
-        // CropStateKey içerisindeki ilgili kaydı kaldırıyoruz.
         const string CropStateKey = "CropState";
         string existing = PlayerPrefs.GetString(CropStateKey, "");
-        // Kaldırmak istediğimiz kaydın formatı: "x,y,cropType;"
         string entryToRemove = $"{tilePos.x},{tilePos.y},{cropType};";
         if (existing.Contains(entryToRemove))
         {
             existing = existing.Replace(entryToRemove, "");
             PlayerPrefs.SetString(CropStateKey, existing);
         }
-
-        // Tarla boş olarak işaretleniyor.
         PlayerPrefs.SetInt(tileKey, 1);
         PlayerPrefs.Save();
-
-        Debug.Log($"🗑️ {cropID} kayıtlardan silindi ve tarla boş olarak işaretlendi!");
     }
 }

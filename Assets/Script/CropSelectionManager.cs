@@ -5,18 +5,18 @@ using TMPro;
 
 public class CropSelectionManager : MonoBehaviour
 {
-    public GameObject cropSelectionPanel; 
-    public Tilemap tilemap;               
-    private Vector3Int selectedCell;      
+    public GameObject cropSelectionPanel;
+    public Tilemap tilemap;
+    private Vector3Int selectedCell;
 
-    public GameObject wheatPrefab;        
-    public GameObject cornPrefab;         
+    public GameObject wheatPrefab;
+    public GameObject cornPrefab;
 
-    public Button plantWheatButton;       
-    public Button plantCornButton;        
+    public Button plantWheatButton;
+    public Button plantCornButton;
 
     public TextMeshProUGUI wheatInventoryText;
-    public TextMeshProUGUI cornInventoryText;  
+    public TextMeshProUGUI cornInventoryText;
 
     public ShopPanelManager shopManager;
 
@@ -39,29 +39,21 @@ public class CropSelectionManager : MonoBehaviour
     public void PlantWheat()
     {
         if (!IsTileEmpty(selectedCell))
-        {
-            Debug.Log("Bu tarla dolu, ekim yapılamaz!");
             return;
-        }
 
         Vector3 cropPos = tilemap.GetCellCenterWorld(selectedCell) + new Vector3(0, 0.3f, 0);
 
         if (shopManager.GetWheatSeedCount() <= 0)
-        {
-            Debug.Log("No wheat seeds available!");
             return;
-        }
 
         shopManager.DecreaseWheatSeedCount(1);
         UpdateSeedUI();
 
         Instantiate(wheatPrefab, cropPos, Quaternion.identity);
 
-        //  Bu alan artık dolu olarak işaretleniyor!
         string tileKey = $"{selectedCell.x}_{selectedCell.y}_IsEmpty";
         PlayerPrefs.SetInt(tileKey, 0);
         PlayerPrefs.Save();
-        Debug.Log($"🌾 Bu tarla ekildi! (Key: {tileKey}, Value: {PlayerPrefs.GetInt(tileKey)})");
 
         SaveCrop(selectedCell, "Wheat");
         cropSelectionPanel.SetActive(false);
@@ -70,29 +62,21 @@ public class CropSelectionManager : MonoBehaviour
     public void PlantCorn()
     {
         if (!IsTileEmpty(selectedCell))
-        {
-            Debug.Log("Bu tarla dolu, ekim yapılamaz!");
             return;
-        }
 
         Vector3 cropPos = tilemap.GetCellCenterWorld(selectedCell) + new Vector3(0, 0.3f, 0);
 
         if (shopManager.GetCornSeedCount() <= 0)
-        {
-            Debug.Log("No wheat seeds available!");
             return;
-        }
 
         shopManager.DecreaseCornSeedCount(1);
         UpdateSeedUI();
 
         Instantiate(cornPrefab, cropPos, Quaternion.identity);
 
-        // Bu alan artık dolu olarak işaretleniyor!
         string tileKey = $"{selectedCell.x}_{selectedCell.y}_IsEmpty";
         PlayerPrefs.SetInt(tileKey, 0);
         PlayerPrefs.Save();
-        Debug.Log($"🌾 Bu tarla ekildi! (Key: {tileKey}, Value: {PlayerPrefs.GetInt(tileKey)})");
 
         SaveCrop(selectedCell, "Corn");
         cropSelectionPanel.SetActive(false);
@@ -106,9 +90,9 @@ public class CropSelectionManager : MonoBehaviour
     void UpdateSeedUI()
     {
         if (wheatInventoryText != null)
-            wheatInventoryText.text = "Wheat Seeds: " + shopManager.GetWheatSeedCount();
+            wheatInventoryText.text = "" + shopManager.GetWheatSeedCount();
         if (cornInventoryText != null)
-            cornInventoryText.text = "Corn Seeds: " + shopManager.GetCornSeedCount();
+            cornInventoryText.text = "" + shopManager.GetCornSeedCount();
 
         if (plantWheatButton != null)
             plantWheatButton.interactable = shopManager.GetWheatSeedCount() > 0;
@@ -118,13 +102,11 @@ public class CropSelectionManager : MonoBehaviour
 
     void SaveCrop(Vector3Int cell, string cropType)
     {
-        // Format: "x,y,cropType;"
         string newEntry = cell.x + "," + cell.y + "," + cropType + ";";
         string existing = PlayerPrefs.GetString(CropStateKey, "");
         existing += newEntry;
         PlayerPrefs.SetString(CropStateKey, existing);
         PlayerPrefs.Save();
-        Debug.Log("Crop saved: " + newEntry);
     }
 
     void LoadCropState()
@@ -146,38 +128,24 @@ public class CropSelectionManager : MonoBehaviour
                         Vector3Int cellPos = new Vector3Int(x, y, 0);
                         Vector3 pos = tilemap.GetCellCenterWorld(cellPos) + new Vector3(0, 0.3f, 0);
                         if (cropType == "Wheat")
-                        {
                             Instantiate(wheatPrefab, pos, Quaternion.identity);
-                        }
                         else if (cropType == "Corn")
-                        {
                             Instantiate(cornPrefab, pos, Quaternion.identity);
-                        }
                     }
                 }
-                Debug.Log("Crop state loaded.");
             }
         }
     }
+
     bool IsTileEmpty(Vector3Int cell)
     {
         string tileKey = $"{cell.x}_{cell.y}_IsEmpty";
-
-        // Eğer tarla boş olarak kaydedilmişse, ekime izin ver
         if (PlayerPrefs.HasKey(tileKey) && PlayerPrefs.GetInt(tileKey) == 1)
-        {
             return true;
-        }
-
-        // Fiziksel olarak ekin olup olmadığını kontrol et
         Vector3 cropPos = tilemap.GetCellCenterWorld(cell) + new Vector3(0, 0.3f, 0);
         Collider2D existingCrop = Physics2D.OverlapCircle(cropPos, tilemap.cellSize.x * 0.2f);
         if (existingCrop != null && existingCrop.CompareTag("Crop"))
-        {
             return false;
-        }
-
-        // Varsayılan olarak boş kabul et
         return true;
     }
 }

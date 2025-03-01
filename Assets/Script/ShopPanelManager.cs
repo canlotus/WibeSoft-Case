@@ -4,24 +4,20 @@ using TMPro;
 
 public class ShopPanelManager : MonoBehaviour
 {
-    [Header("UI Elements")]
-    public GameObject shopPanel;           // The shop panel UI object
-    public Button closeButton;             // Button to close the shop panel
-    public TextMeshProUGUI goldText;       // Displays current gold
-    public TextMeshProUGUI wheatSeedText;  // Displays wheat seed count
-    public TextMeshProUGUI cornSeedText;   // Displays corn seed count
+    public GameObject shopPanel;
+    public Button closeButton;
+    public TextMeshProUGUI goldText;
+    public TextMeshProUGUI wheatSeedText;
+    public TextMeshProUGUI cornSeedText;
 
-    [Header("Purchase Settings")]
-    public int bundleCount = 3;            // Seeds are bought in bundles of 3
-    public int wheatSeedPrice = 30;        // Price for a bundle of wheat seeds
-    public int cornSeedPrice = 40;         // Price for a bundle of corn seeds
+    public int bundleCount = 3;
+    public int wheatSeedPrice = 30;
+    public int cornSeedPrice = 40;
 
-    [Header("Player Data")]
-    public int currentGold = 1000;         // Starting gold
-    private int wheatSeedCount = 0;        // Wheat seed inventory count
-    private int cornSeedCount = 0;         // Corn seed inventory count
+    public int currentGold = 1000;
+    private int wheatSeedCount = 0;
+    private int cornSeedCount = 0;
 
-    // Keys for saving with PlayerPrefs
     private const string GoldKey = "Gold";
     private const string WheatSeedKey = "WheatSeedCount";
     private const string CornSeedKey = "CornSeedCount";
@@ -58,11 +54,6 @@ public class ShopPanelManager : MonoBehaviour
             wheatSeedCount += bundleCount;
             UpdateUI();
             SaveShopData();
-            Debug.Log("Purchased " + bundleCount + " wheat seeds for " + wheatSeedPrice + " gold.");
-        }
-        else
-        {
-            Debug.Log("Not enough gold to purchase wheat seeds.");
         }
     }
 
@@ -74,11 +65,6 @@ public class ShopPanelManager : MonoBehaviour
             cornSeedCount += bundleCount;
             UpdateUI();
             SaveShopData();
-            Debug.Log("Purchased " + bundleCount + " corn seeds for " + cornSeedPrice + " gold.");
-        }
-        else
-        {
-            Debug.Log("Not enough gold to purchase corn seeds.");
         }
     }
 
@@ -90,9 +76,6 @@ public class ShopPanelManager : MonoBehaviour
             wheatSeedText.text = "Price:" + wheatSeedPrice;
         if (cornSeedText != null)
             cornSeedText.text = "Price: " + cornSeedPrice;
-
-        if (currentGold < wheatSeedPrice && wheatSeedText != null) { }
-
     }
 
     void SaveShopData()
